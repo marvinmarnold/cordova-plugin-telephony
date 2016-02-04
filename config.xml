@@ -21,12 +21,11 @@
             </feature>
         </config-file>
 
-        <source-file src="src/android/com/megster/cordova/BluetoothSerial.java"
-            target-dir="src/com/megster/cordova"/>
+        <source-file src="src/android/org/stingraymappingproject/cordova/telephony.java"
+            target-dir="src/org/stingraymappingproject/cordova"/>
 
         <config-file target="AndroidManifest.xml" parent="/manifest">
-            <uses-permission android:name="android.permission.BLUETOOTH" />
-            <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+            <uses-feature android:name="android.hardware.telephony" />
         </config-file>
     </platform>
 

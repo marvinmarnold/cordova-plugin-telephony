@@ -28,7 +28,11 @@ public class Telephony extends CordovaPlugin {
         LOG.d(TAG, "action = " + action);
 
         if (telephonyManager == null) {
-            telephonyManager = 
+            telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+        }
+
+        if (action.equals(GET_CID)) {
+            return telephonyManager.getDeviceId();
         }
     }
 }
