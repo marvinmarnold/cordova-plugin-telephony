@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    id="cordova-plugin-telephony"
+    version="0.0.1">
+
+    <name>Telephony Plugin</name>
+    <description>
+        Access to Android's Telephony package, especially information like CID, IMSI, etc for IMSI catcher detection.
+    </description>
+    <keywords>telephony,imsi,cid,stingray,arfcn</keywords>
+    <repo>git@github.com:marvinmarnold/cordova-plugin-telephony.git</repo>
+    <issue>https://github.com/marvinmarnold/cordova-plugin-telephony/issues</issue>
+    <license>GPLv3</license>
+
+    <!-- android -->
+    <platform name="android">
+        <config-file target="res/xml/config.xml" parent="/widget">
+            <feature name="Telephony">
+                <param name="android-package" value="org.stingraymappingproject.telephony"/>
+            </feature>
+        </config-file>
+
+        <source-file src="src/android/com/megster/cordova/BluetoothSerial.java"
+            target-dir="src/com/megster/cordova"/>
+
+        <config-file target="AndroidManifest.xml" parent="/manifest">
+            <uses-permission android:name="android.permission.BLUETOOTH" />
+            <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+        </config-file>
+    </platform>
+
+</plugin>
