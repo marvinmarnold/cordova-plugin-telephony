@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/cordova-plugin-telephony.iml" filepath="$PROJECT_DIR$/cordova-plugin-telephony.iml" />
+      <module fileurl="file://$PROJECT_DIR$/src/android/org/org.iml" filepath="$PROJECT_DIR$/src/android/org/org.iml" />
     </modules>
   </component>
 </project>

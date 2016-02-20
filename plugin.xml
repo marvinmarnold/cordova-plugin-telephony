@@ -1,28 +1,27 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <plugin
-    xmlns="http://apache.org/cordova/ns/plugins/1.0"
+    xmlns="http://www.phonegap.com/ns/plugins/1.0"
     xmlns:android="http://schemas.android.com/apk/res/android"
     id="cordova-plugin-telephony"
     version="0.0.1">
 
     <name>Telephony Plugin</name>
-    <description>
-        Access to Android's Telephony package, especially information like CID, IMSI, etc for IMSI catcher detection.
-    </description>
+    <description> Access to Android's Telephony package, especially information like CID, IMSI, etc for IMSI catcher detection.</description>
     <keywords>telephony,imsi,cid,stingray,arfcn</keywords>
     <repo>git@github.com:marvinmarnold/cordova-plugin-telephony.git</repo>
     <issue>https://github.com/marvinmarnold/cordova-plugin-telephony/issues</issue>
     <license>GPLv3</license>
 
+
     <js-module src="www/telephony.js" name="telephony">
         <clobbers target="window.telephony" />
     </js-module>
 
-    <!-- android -->
     <platform name="android">
+
         <config-file target="res/xml/config.xml" parent="/widget">
             <feature name="Telephony">
-                <param name="android-package" value="org.stingraymappingproject.telephony"/>
+                <param name="android-package" value="org.stingraymappingproject.cordova.Telephony"/>
             </feature>
         </config-file>
 
@@ -31,7 +30,8 @@
 
         <config-file target="AndroidManifest.xml" parent="/manifest">
             <uses-feature android:name="android.hardware.telephony" />
+            <uses-permission android:name="android.permission.READ_PHONE_STATE" />
         </config-file>
-    </platform>
 
+    </platform>
 </plugin>
