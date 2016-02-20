@@ -6,7 +6,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import android.content.Context;
-import android.telephony.TelephonyManager;
+//import android.telephony.TelephonyManager;
 import java.util.Set;
 
 /**
