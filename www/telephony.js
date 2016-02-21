@@ -1,8 +1,8 @@
 /*global cordova*/
 module.exports = {
 
-    getCid: function (success, failure) {
-      cordova.exec(success, failure, "Telephony", "getCid", []);
+    refresh: function (success, failure) {
+      cordova.exec(success, failure, "Telephony", "refresh", []);
     },
 
 }
