@@ -38,12 +38,12 @@ public class Telephony extends CordovaPlugin {
         if (action.equals("refresh")) {
             Context context = this.cordova.getActivity().getApplicationContext();
             TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-            JSONObject result;
+            JSONObject result = new JSONObject();
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-              result = refreshV18(tm);
+              result = refreshV18(tm, result);
             } else {
-              result = refreshV1(tm);
+              result = refreshV1(tm, result);
             }
 
             callbackContext.success(result);
@@ -57,13 +57,12 @@ public class Telephony extends CordovaPlugin {
         }
     }
 
-    private JSONObject buildGSMResult(TelephonyManager tm) {
-        JSONObject result = new JSONObject();
+    private JSONObject buildGSMResult(TelephonyManager tm, JSONObject result) {
         String mncMCC = tm.getNetworkOperator();
 
         if (mncMCC != null && mncMCC.length() >= 3 ) {
             try {
-                result.put("phoneType", "gsm");
+                result.put("phoneType", "android-v1-gsm");
                 result.put("mnc", Integer.parseInt(mncMCC.substring(3)));
                 result.put("mcc", Integer.parseInt(mncMCC.substring(0, 3)));
 
@@ -82,27 +81,24 @@ public class Telephony extends CordovaPlugin {
         return result;
     }
 
-    private JSONObject refreshV1(TelephonyManager tm) {
-        int phoneType = tm.getPhoneType();
-        JSONObject result = new JSONObject();
+    private JSONObject refreshV1(TelephonyManager tm, JSONObject result) {
+//        int phoneType = tm.getPhoneType();
 
-        switch(phoneType) {
-            case TelephonyManager.PHONE_TYPE_NONE:
-            case TelephonyManager.PHONE_TYPE_SIP:
-            case TelephonyManager.PHONE_TYPE_GSM:
-                result = buildGSMResult(tm);
-                break;
-        }
+//        switch(phoneType) {
+//            case TelephonyManager.PHONE_TYPE_NONE:
+//            case TelephonyManager.PHONE_TYPE_SIP:
+//            case TelephonyManager.PHONE_TYPE_GSM:
+                result = buildGSMResult(tm, result);
+//                break;
+//        }
 
 
         return result;
     }
 
-    private JSONObject refreshV18(TelephonyManager tm) {
-        JSONObject result = new JSONObject();
+    private JSONObject refreshV18(TelephonyManager tm, JSONObject result) {
 
         try {
-            result.put("phoneType", "gsm");
             List<CellInfo> cellInfoList = tm.getAllCellInfo();
             if (cellInfoList != null) {
                 for (final CellInfo info : cellInfoList) {
@@ -110,7 +106,8 @@ public class Telephony extends CordovaPlugin {
                         final CellSignalStrengthGsm signalStrength = ((CellInfoGsm) info).getCellSignalStrength();
                         final CellIdentityGsm identityGsm = ((CellInfoGsm) info).getCellIdentity();
 
-                        result.put("debug", "gsm");
+                        result.put("debug", "gsm18");
+                        result.put("phoneType", "android-v17-gsm");
                         result.put("signalStrengthDBM", signalStrength.getDbm());
                         result.put("mnc", identityGsm.getMnc());
                         result.put("mcc", identityGsm.getMcc());
@@ -122,6 +119,7 @@ public class Telephony extends CordovaPlugin {
                         final CellIdentityCdma identityCdma = ((CellInfoCdma) info).getCellIdentity();
 
                         result.put("debug", "cdma");
+                        result.put("phoneType", "android-v17-cdma");
                         result.put("signalStrengthDBM", signalStrength.getDbm());
 //                        pDevice.mCell.setSID(identityCdma.getSystemId());
                         result.put("mnc", identityCdma.getSystemId());
@@ -134,6 +132,7 @@ public class Telephony extends CordovaPlugin {
                         final CellIdentityLte identityLte = ((CellInfoLte) info).getCellIdentity();
 
                         result.put("debug", "lte");
+                        result.put("phoneType", "android-v17-lte");
                         result.put("signalStrengthDBM", signalStrength.getDbm());
                         result.put("mnc", identityLte.getMnc());
                         result.put("mcc", identityLte.getMcc());
@@ -146,6 +145,7 @@ public class Telephony extends CordovaPlugin {
                         final CellIdentityWcdma identityWcdma = ((CellInfoWcdma) info).getCellIdentity();
 
                         result.put("debug", "wcdma");
+                        result.put("phoneType", "android-v17-wcdma");
                         result.put("signalStrengthDBM", signalStrength.getDbm());
                         result.put("mnc", identityWcdma.getMnc());
                         result.put("mcc", identityWcdma.getMcc());
@@ -153,6 +153,11 @@ public class Telephony extends CordovaPlugin {
                         result.put("lac", identityWcdma.getLac());
                         result.put("psc", identityWcdma.getPsc());
                     }
+                }
+
+                // Fallback to lower API if values appear incorrect
+                if(result.getInt("mnc") == Integer.MAX_VALUE) {
+                    result = refreshV1(tm, result);
                 }
             }
         }catch (Exception e) {
