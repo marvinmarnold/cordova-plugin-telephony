@@ -24,6 +24,7 @@ import android.telephony.CellSignalStrengthWcdma;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.telephony.gsm.GsmCellLocation;
+import android.telephony.NeighboringCellInfo;
 
 import java.util.List;
 import android.app.Activity;
@@ -72,6 +73,23 @@ public class Telephony extends CordovaPlugin {
                     result.put("lac", gsmCellLocation.getLac());
                     result.put("psc", gsmCellLocation.getPsc());
                 }
+
+                JSONArray ncArray = new JSONArray();
+                int i = 1;
+                List<NeighboringCellInfo> ncList = tm.getNeighboringCellInfo();
+                for(NeighboringCellInfo ncInfo : ncList) {
+                    JSONObject ncObj = new JSONObject();
+
+                    ncObj.put("cid", ncInfo.getCid());
+                    ncObj.put("lac", ncInfo.getLac());
+                    ncObj.put("readingType", ncInfo.getNetworkType());
+                    ncObj.put("psc", ncInfo.getPsc());
+                    ncObj.put("signalStrength", ncInfo.getRssi());
+                    
+                    result.put("neighbor" + i, ncObj);
+                    i++;
+                }
+
             } catch (Exception e) {
             }
 
@@ -97,63 +115,92 @@ public class Telephony extends CordovaPlugin {
     }
 
     private JSONObject refreshV18(TelephonyManager tm, JSONObject result) {
-
         try {
             List<CellInfo> cellInfoList = tm.getAllCellInfo();
             if (cellInfoList != null) {
                 for (final CellInfo info : cellInfoList) {
+                    int tSignalStrength = -1;
+                    int tMnc = -1;
+                    int tMcc = -1;
+                    int tCid = -1;
+                    int tLac = -1;
+                    int tPsc = -1;
+                    String tPhoneType = null;
+
                     if (info instanceof CellInfoGsm) {
                         final CellSignalStrengthGsm signalStrength = ((CellInfoGsm) info).getCellSignalStrength();
                         final CellIdentityGsm identityGsm = ((CellInfoGsm) info).getCellIdentity();
 
                         result.put("debug", "gsm18");
-                        result.put("phoneType", "android-v17-gsm");
-                        result.put("signalStrengthDBM", signalStrength.getDbm());
-                        result.put("mnc", identityGsm.getMnc());
-                        result.put("mcc", identityGsm.getMcc());
-                        result.put("cid", identityGsm.getCid());
-                        result.put("lac", identityGsm.getLac());
-                        result.put("psc", identityGsm.getPsc());
+                        tPhoneType = "android-v17-gsm";
+                        tSignalStrength = signalStrength.getDbm();
+                        tMnc = identityGsm.getMnc();
+                        tMcc = identityGsm.getMcc();
+                        tCid = identityGsm.getCid();
+                        tLac = identityGsm.getLac();
+                        tPsc = identityGsm.getPsc();
                     } else if (info instanceof CellInfoCdma) {
                         final CellSignalStrengthCdma signalStrength = ((CellInfoCdma) info).getCellSignalStrength();
                         final CellIdentityCdma identityCdma = ((CellInfoCdma) info).getCellIdentity();
 
                         result.put("debug", "cdma");
-                        result.put("phoneType", "android-v17-cdma");
-                        result.put("signalStrengthDBM", signalStrength.getDbm());
-//                        pDevice.mCell.setSID(identityCdma.getSystemId());
-                        result.put("mnc", identityCdma.getSystemId());
-//                        result.put("mcc", identityGsm.getMcc());
-                        result.put("cid", identityCdma.getBasestationId());
-                        result.put("lac", identityCdma.getNetworkId());
-//                        result.put("psc", identityGsm.getPsc());
+                        tPhoneType = "android-v17-cdma";
+                        tSignalStrength = signalStrength.getDbm();
+                        tMnc = identityCdma.getSystemId();
+//                        tMcc = identityCdma.getMcc();
+                        tCid = identityCdma.getBasestationId();
+                        tLac = identityCdma.getNetworkId();
+//                        tPsc = identityCdma.getPsc();
                     } else if (info instanceof CellInfoLte) {
                         final CellSignalStrengthLte signalStrength = ((CellInfoLte) info).getCellSignalStrength();
                         final CellIdentityLte identityLte = ((CellInfoLte) info).getCellIdentity();
 
                         result.put("debug", "lte");
-                        result.put("phoneType", "android-v17-lte");
-                        result.put("signalStrengthDBM", signalStrength.getDbm());
-                        result.put("mnc", identityLte.getMnc());
-                        result.put("mcc", identityLte.getMcc());
-                        result.put("cid", identityLte.getCi());
-//                        result.put("lac", identityGsm.getLac());
-//                        result.put("psc", identityGsm.getPsc());
+                        tPhoneType = "android-v17-lte";
+                        tSignalStrength = signalStrength.getDbm();
+                        tMnc = identityLte.getMnc();
+                        tMcc = identityLte.getMcc();
+                        tCid = identityLte.getCi();
+//                        tLac = identityGsm.getLac();
+//                        tPsc = identityGsm.getPsc();
 //                        pDevice.mCell.setTimingAdvance(lte.getTimingAdvance());
                     } else if (info instanceof CellInfoWcdma) {
                         final CellSignalStrengthWcdma signalStrength = ((CellInfoWcdma) info).getCellSignalStrength();
                         final CellIdentityWcdma identityWcdma = ((CellInfoWcdma) info).getCellIdentity();
 
                         result.put("debug", "wcdma");
-                        result.put("phoneType", "android-v17-wcdma");
-                        result.put("signalStrengthDBM", signalStrength.getDbm());
-                        result.put("mnc", identityWcdma.getMnc());
-                        result.put("mcc", identityWcdma.getMcc());
-                        result.put("cid", identityWcdma.getCid());
-                        result.put("lac", identityWcdma.getLac());
-                        result.put("psc", identityWcdma.getPsc());
+                        tPhoneType = "android-v17-gsm";
+                        tSignalStrength = signalStrength.getDbm();
+                        tMnc = identityWcdma.getMnc();
+                        tMcc = identityWcdma.getMcc();
+                        tCid = identityWcdma.getCid();
+                        tLac = identityWcdma.getLac();
+                        tPsc = identityWcdma.getPsc();
+                    }
+
+                    if(tPhoneType != null) {
+                        result.put("phoneType", tPhoneType);
+                    }
+                    if(tSignalStrength != -1) {
+                        result.put("signalStrength", tSignalStrength);
+                    }
+                    if(tMcc != -1) {
+                        result.put("mcc", tMcc);
+                    }
+                    if(tMnc != -1) {
+                        result.put("mnc", tMnc);
+                    }
+                    if(tCid != -1) {
+                        result.put("cid", tCid);
+                    }
+                    if(tLac != -1) {
+                        result.put("lac", tLac);
+                    }
+                    if(tPsc != -1) {
+                        result.put("psc", tPsc);
                     }
                 }
+
 
                 // Fallback to lower API if values appear incorrect
                 if(result.getInt("mnc") == Integer.MAX_VALUE) {
