@@ -7,11 +7,15 @@
 
     <name>Telephony Plugin</name>
     <description> Access to Android's Telephony package, especially information like CID, IMSI, etc for IMSI catcher detection.</description>
-    <keywords>telephony,imsi,cid,stingray,arfcn</keywords>
+    <keywords>telephony,imsi,cid,stingray,signal strength,mcc,mnc,sim,gsm,lte</keywords>
     <repo>git@github.com:marvinmarnold/cordova-plugin-telephony.git</repo>
     <issue>https://github.com/marvinmarnold/cordova-plugin-telephony/issues</issue>
     <license>GPLv3</license>
 
+
+    <engines>
+      <engine name="cordova" version=">=4.0.0"/>
+    </engines>
 
     <js-module src="www/telephony.js" name="telephony">
         <clobbers target="window.telephony" />
