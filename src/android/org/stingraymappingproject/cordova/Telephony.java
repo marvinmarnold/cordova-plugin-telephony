@@ -74,22 +74,21 @@ public class Telephony extends CordovaPlugin {
                     result.put("psc", gsmCellLocation.getPsc());
                 }
 
-                JSONArray ncArray = new JSONArray();
-                int i = 1;
+                JSONArray ncNeighbors = new JSONArray();
                 List<NeighboringCellInfo> ncList = tm.getNeighboringCellInfo();
+
                 for(NeighboringCellInfo ncInfo : ncList) {
                     JSONObject ncObj = new JSONObject();
 
                     ncObj.put("cid", ncInfo.getCid());
                     ncObj.put("lac", ncInfo.getLac());
-                    ncObj.put("readingType", ncInfo.getNetworkType());
+                    ncObj.put("networkType", ncInfo.getNetworkType());
                     ncObj.put("psc", ncInfo.getPsc());
                     ncObj.put("signalStrength", ncInfo.getRssi());
-                    
-                    result.put("neighbor" + i, ncObj);
-                    i++;
-                }
 
+                    ncNeighbors.put(ncObj);
+                }
+                result.put("neighbors", ncNeighbors);
             } catch (Exception e) {
             }
 
