@@ -1,4 +1,3 @@
-
 package org.stingraymappingproject.cordova;
 
 import org.apache.cordova.*;
@@ -6,8 +5,12 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.Manifest;
 import android.annotation.TargetApi;
+import android.content.pm.PackageManager;
 import android.os.Build;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.telephony.CellIdentityCdma;
 import android.telephony.CellIdentityGsm;
 import android.telephony.CellIdentityLte;
@@ -21,41 +24,92 @@ import android.telephony.CellSignalStrengthCdma;
 import android.telephony.CellSignalStrengthGsm;
 import android.telephony.CellSignalStrengthLte;
 import android.telephony.CellSignalStrengthWcdma;
-import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.telephony.gsm.GsmCellLocation;
 import android.telephony.NeighboringCellInfo;
 
 import java.util.List;
-import android.app.Activity;
-import android.content.Context;
 
-// Much credit to AIMSICD DeviceAPI.java
+import android.content.Context;
+/*
+// Much credit to AIMSICD
+// https://github.com/CellularPrivacy/Android-IMSI-Catcher-Detector/blob/development/AIMSICD/src/main/java/com/secupwn/aimsicd/utils/Device.java
+//
+// AND
+//
+// cordova-plugin-sim
+// https://github.com/pbakondy/cordova-plugin-sim/blob/master/src/android/com/pbakondy/Sim.java
+*/
+
 public class Telephony extends CordovaPlugin {
+
+    // Actions
+    private static final String ACTION_GET_TELEPHONY_INFO = "getTelephonyInfo";
+
+    // Permissions
+    private static final String HAS_READ_PERMISSION = "hasReadPermission";
+    private static final String REQUEST_READ_PERMISSION = "requestReadPermission";
 
     @Override
     public boolean execute(String action, JSONArray data, CallbackContext callbackContext) throws JSONException {
 
-        if (action.equals("refresh")) {
+        if (action.equals(ACTION_GET_TELEPHONY_INFO)) {
             Context context = this.cordova.getActivity().getApplicationContext();
             TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+
+            // Initialize empty JSONObject for response
             JSONObject result = new JSONObject();
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-              result = refreshV18(tm, result);
+                result = refreshV18(tm, result);
             } else {
-              result = refreshV1(tm, result);
+                result = refreshV1(tm, result);
             }
 
             callbackContext.success(result);
 
             return true;
 
-        } else {
-
-            return false;
-
+        } else if (action.equals(HAS_READ_PERMISSION)) {
+            hasReadPermission(callbackContext);
+            return true;
+        } else if (action.equals(REQUEST_READ_PERMISSION)) {
+            requestReadPermission(callbackContext);
+            return true;
         }
+        else {
+            return false;
+        }
+    }
+
+    private void hasReadPermission(CallbackContext callbackContext) {
+        boolean hasPermission = hasPermission(Manifest.permission.READ_PHONE_STATE);
+        PluginResult result = new PluginResult(PluginResult.Status.OK, hasPermission);
+
+        callbackContext.sendPluginResult(result);
+    }
+
+    private boolean hasPermission(String permissionType) {
+        // In older APIs, permissions granted at install time
+        if (Build.VERSION.SDK_INT < 23) {
+            return true;
+        }
+
+        // Must check permission at run time for new API
+        return ContextCompat.checkSelfPermission(this.cordova.getActivity(), permissionType) ==
+                PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void requestReadPermission(CallbackContext callbackContext) {
+        requestPermission(callbackContext, Manifest.permission.READ_PHONE_STATE);
+    }
+
+    private void requestPermission(CallbackContext callbackContext, String type) {
+        if (!hasPermission(type)) {
+            ActivityCompat.requestPermissions(this.cordova.getActivity(), new String[]{type}, 18643);
+        }
+
+        callbackContext.success();
     }
 
     private JSONObject buildGSMResult(TelephonyManager tm, JSONObject result) {
@@ -105,7 +159,7 @@ public class Telephony extends CordovaPlugin {
 //            case TelephonyManager.PHONE_TYPE_NONE:
 //            case TelephonyManager.PHONE_TYPE_SIP:
 //            case TelephonyManager.PHONE_TYPE_GSM:
-                result = buildGSMResult(tm, result);
+        result = buildGSMResult(tm, result);
 //                break;
 //        }
 
@@ -113,6 +167,7 @@ public class Telephony extends CordovaPlugin {
         return result;
     }
 
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
     private JSONObject refreshV18(TelephonyManager tm, JSONObject result) {
         try {
             List<CellInfo> cellInfoList = tm.getAllCellInfo();
@@ -183,6 +238,7 @@ public class Telephony extends CordovaPlugin {
                     if(tSignalStrength != -1) {
                         result.put("signalStrength", tSignalStrength);
                     }
+
                     if(tMcc != -1) {
                         result.put("mcc", tMcc);
                     }
