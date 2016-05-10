@@ -50,6 +50,17 @@ public class Telephony extends CordovaPlugin {
     private static final String HAS_READ_PERMISSION = "hasReadPermission";
     private static final String REQUEST_READ_PERMISSION = "requestReadPermission";
 
+    private static final String[] REQUIRED_PERMISSIONS = {
+        Manifest.permission.READ_PHONE_STATE,
+        Manifest.permission.ACCESS_COARSE_LOCATION,
+//        Manifest.permission.ACCESS_FINE_LOCATION,
+//        Manifest.permission.ACCESS_NETWORK_STATE,
+//        Manifest.permission.CHANGE_NETWORK_STATE,
+//        Manifest.permission.WAKE_LOCK,
+//        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+//        Manifest.permission.RECEIVE_BOOT_COMPLETED
+    };
+
     @Override
     public boolean execute(String action, JSONArray data, CallbackContext callbackContext) throws JSONException {
 
@@ -83,7 +94,13 @@ public class Telephony extends CordovaPlugin {
     }
 
     private void hasReadPermission(CallbackContext callbackContext) {
-        boolean hasPermission = hasPermission(Manifest.permission.READ_PHONE_STATE);
+
+        boolean hasPermission = true;
+
+        for(String requiredPermission : REQUIRED_PERMISSIONS) {
+            hasPermission = hasPermission && hasPermission(requiredPermission);
+        }
+
         PluginResult result = new PluginResult(PluginResult.Status.OK, hasPermission);
 
         callbackContext.sendPluginResult(result);
@@ -101,15 +118,17 @@ public class Telephony extends CordovaPlugin {
     }
 
     private void requestReadPermission(CallbackContext callbackContext) {
-        requestPermission(callbackContext, Manifest.permission.READ_PHONE_STATE);
-    }
-
-    private void requestPermission(CallbackContext callbackContext, String type) {
-        if (!hasPermission(type)) {
-            ActivityCompat.requestPermissions(this.cordova.getActivity(), new String[]{type}, 18643);
+        for(String requiredPermission : REQUIRED_PERMISSIONS) {
+            requestPermission(requiredPermission);
         }
 
         callbackContext.success();
+    }
+
+    private void requestPermission(String type) {
+        if (!hasPermission(type)) {
+            ActivityCompat.requestPermissions(this.cordova.getActivity(), new String[]{type}, 18643);
+        }
     }
 
     private JSONObject buildGSMResult(TelephonyManager tm, JSONObject result) {
