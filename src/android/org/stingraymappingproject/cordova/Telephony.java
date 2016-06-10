@@ -31,6 +31,7 @@ import android.telephony.NeighboringCellInfo;
 import java.util.List;
 
 import android.content.Context;
+import android.util.Log;
 /*
 // Much credit to AIMSICD
 // https://github.com/CellularPrivacy/Android-IMSI-Catcher-Detector/blob/development/AIMSICD/src/main/java/com/secupwn/aimsicd/utils/Device.java
@@ -42,6 +43,7 @@ import android.content.Context;
 */
 
 public class Telephony extends CordovaPlugin {
+    private static final String TAG = "cordova-telephony";
 
     // Actions
     private static final String ACTION_GET_TELEPHONY_INFO = "getTelephonyInfo";
@@ -53,7 +55,7 @@ public class Telephony extends CordovaPlugin {
     private static final String[] REQUIRED_PERMISSIONS = {
         Manifest.permission.READ_PHONE_STATE,
         Manifest.permission.ACCESS_COARSE_LOCATION,
-//        Manifest.permission.ACCESS_FINE_LOCATION,
+        Manifest.permission.ACCESS_FINE_LOCATION,
 //        Manifest.permission.ACCESS_NETWORK_STATE,
 //        Manifest.permission.CHANGE_NETWORK_STATE,
 //        Manifest.permission.WAKE_LOCK,
@@ -63,8 +65,9 @@ public class Telephony extends CordovaPlugin {
 
     @Override
     public boolean execute(String action, JSONArray data, CallbackContext callbackContext) throws JSONException {
-
+        Log.d(TAG, "execute " + action);
         if (action.equals(ACTION_GET_TELEPHONY_INFO)) {
+            Log.d(TAG, "GET TELEPHONY DATA");
             Context context = this.cordova.getActivity().getApplicationContext();
             TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
 
@@ -72,8 +75,10 @@ public class Telephony extends CordovaPlugin {
             JSONObject result = new JSONObject();
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                Log.d(TAG, "new version");
                 result = refreshV18(tm, result);
             } else {
+                Log.d(TAG, "old version");
                 result = refreshV1(tm, result);
             }
 
@@ -82,9 +87,11 @@ public class Telephony extends CordovaPlugin {
             return true;
 
         } else if (action.equals(HAS_READ_PERMISSION)) {
+            Log.d(TAG, "HAS READ PERMISSION");
             hasReadPermission(callbackContext);
             return true;
         } else if (action.equals(REQUEST_READ_PERMISSION)) {
+            Log.d(TAG, "REQUEST READ POSITION");
             requestReadPermission(callbackContext);
             return true;
         }
@@ -93,48 +100,13 @@ public class Telephony extends CordovaPlugin {
         }
     }
 
-    private void hasReadPermission(CallbackContext callbackContext) {
-
-        boolean hasPermission = true;
-
-        for(String requiredPermission : REQUIRED_PERMISSIONS) {
-            hasPermission = hasPermission && hasPermission(requiredPermission);
-        }
-
-        PluginResult result = new PluginResult(PluginResult.Status.OK, hasPermission);
-
-        callbackContext.sendPluginResult(result);
-    }
-
-    private boolean hasPermission(String permissionType) {
-        // In older APIs, permissions granted at install time
-        if (Build.VERSION.SDK_INT < 23) {
-            return true;
-        }
-
-        // Must check permission at run time for new API
-        return ContextCompat.checkSelfPermission(this.cordova.getActivity(), permissionType) ==
-                PackageManager.PERMISSION_GRANTED;
-    }
-
-    private void requestReadPermission(CallbackContext callbackContext) {
-        for(String requiredPermission : REQUIRED_PERMISSIONS) {
-            requestPermission(requiredPermission);
-        }
-
-        callbackContext.success();
-    }
-
-    private void requestPermission(String type) {
-        if (!hasPermission(type)) {
-            ActivityCompat.requestPermissions(this.cordova.getActivity(), new String[]{type}, 18643);
-        }
-    }
-
     private JSONObject buildGSMResult(TelephonyManager tm, JSONObject result) {
+        Log.d(TAG, "its buildGSMResult");
         String mncMCC = tm.getNetworkOperator();
 
         if (mncMCC != null && mncMCC.length() >= 3 ) {
+
+            Log.d(TAG, "its mncMCC > 3");
             try {
                 result.put("phoneType", "android-v1-gsm");
                 result.put("mnc", Integer.parseInt(mncMCC.substring(3)));
@@ -172,6 +144,7 @@ public class Telephony extends CordovaPlugin {
     }
 
     private JSONObject refreshV1(TelephonyManager tm, JSONObject result) {
+        Log.d(TAG, "its V1");
 //        int phoneType = tm.getPhoneType();
 
 //        switch(phoneType) {
@@ -188,19 +161,29 @@ public class Telephony extends CordovaPlugin {
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
     private JSONObject refreshV18(TelephonyManager tm, JSONObject result) {
+        int tSignalStrength = -1;
+        int tMnc = -1;
+        int tMcc = -1;
+        int tCid = -1;
+        int tLac = -1;
+        int tPsc = -1;
+
         try {
+            Log.d(TAG, "try get all cell info");
+
             List<CellInfo> cellInfoList = tm.getAllCellInfo();
+            Log.d(TAG, "got cell info");
+
             if (cellInfoList != null) {
+                Log.d(TAG, "cell info not null");
+
                 for (final CellInfo info : cellInfoList) {
-                    int tSignalStrength = -1;
-                    int tMnc = -1;
-                    int tMcc = -1;
-                    int tCid = -1;
-                    int tLac = -1;
-                    int tPsc = -1;
+                    Log.d(TAG, "another cell info");
+
                     String tPhoneType = null;
 
                     if (info instanceof CellInfoGsm) {
+                        Log.d(TAG, "its CellInfoGsm");
                         final CellSignalStrengthGsm signalStrength = ((CellInfoGsm) info).getCellSignalStrength();
                         final CellIdentityGsm identityGsm = ((CellInfoGsm) info).getCellIdentity();
 
@@ -213,6 +196,7 @@ public class Telephony extends CordovaPlugin {
                         tLac = identityGsm.getLac();
                         tPsc = identityGsm.getPsc();
                     } else if (info instanceof CellInfoCdma) {
+                        Log.d(TAG, "its CellInfoCdma");
                         final CellSignalStrengthCdma signalStrength = ((CellInfoCdma) info).getCellSignalStrength();
                         final CellIdentityCdma identityCdma = ((CellInfoCdma) info).getCellIdentity();
 
@@ -225,6 +209,7 @@ public class Telephony extends CordovaPlugin {
                         tLac = identityCdma.getNetworkId();
 //                        tPsc = identityCdma.getPsc();
                     } else if (info instanceof CellInfoLte) {
+                        Log.d(TAG, "its CellInfoLte");
                         final CellSignalStrengthLte signalStrength = ((CellInfoLte) info).getCellSignalStrength();
                         final CellIdentityLte identityLte = ((CellInfoLte) info).getCellIdentity();
 
@@ -238,6 +223,7 @@ public class Telephony extends CordovaPlugin {
 //                        tPsc = identityGsm.getPsc();
 //                        pDevice.mCell.setTimingAdvance(lte.getTimingAdvance());
                     } else if (info instanceof CellInfoWcdma) {
+                        Log.d(TAG, "its CellInfoWcdma");
                         final CellSignalStrengthWcdma signalStrength = ((CellInfoWcdma) info).getCellSignalStrength();
                         final CellIdentityWcdma identityWcdma = ((CellInfoWcdma) info).getCellIdentity();
 
@@ -252,9 +238,11 @@ public class Telephony extends CordovaPlugin {
                     }
 
                     if(tPhoneType != null) {
+                        Log.d(TAG, "its phone type");
                         result.put("phoneType", tPhoneType);
                     }
                     if(tSignalStrength != -1) {
+                        Log.d(TAG, "its signal strength");
                         result.put("signalStrength", tSignalStrength);
                     }
 
@@ -273,18 +261,59 @@ public class Telephony extends CordovaPlugin {
                     if(tPsc != -1) {
                         result.put("psc", tPsc);
                     }
-                }
 
-
-                // Fallback to lower API if values appear incorrect
-                if(result.getInt("mnc") == Integer.MAX_VALUE) {
-                    result = refreshV1(tm, result);
+                    if(result.get("debug") != null) {
+                       result.put("debug", result.getInt("mnc"));
+                    }
                 }
             }
         }catch (Exception e) {
         }
 
+        // Fallback to lower API if values appear incorrect
+        if((tMnc == Integer.MAX_VALUE) || (tMnc == -1)) {
+            Log.d(TAG, "its max value MNC");
+            result = refreshV1(tm, result);
+        }
+
+        Log.d(TAG, "GOT TO THE END");
         return result;
     }
+    private void hasReadPermission(CallbackContext callbackContext) {
 
+        boolean hasPermission = true;
+
+        for(String requiredPermission : REQUIRED_PERMISSIONS) {
+            hasPermission = hasPermission && hasPermission(requiredPermission);
+        }
+
+        PluginResult result = new PluginResult(PluginResult.Status.OK, hasPermission);
+
+        callbackContext.sendPluginResult(result);
+    }
+
+    private boolean hasPermission(String permissionType) {
+        // In older APIs, permissions granted at install time
+        if (Build.VERSION.SDK_INT < 23) {
+            return true;
+        }
+
+        // Must check permission at run time for new API
+        return ContextCompat.checkSelfPermission(this.cordova.getActivity(), permissionType) ==
+                PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void requestReadPermission(CallbackContext callbackContext) {
+        for(String requiredPermission : REQUIRED_PERMISSIONS) {
+            requestPermission(requiredPermission);
+        }
+
+        callbackContext.success();
+    }
+
+    private void requestPermission(String type) {
+        if (!hasPermission(type)) {
+            ActivityCompat.requestPermissions(this.cordova.getActivity(), new String[]{type}, 18643);
+        }
+    }
 }
