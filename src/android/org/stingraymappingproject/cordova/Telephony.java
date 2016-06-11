@@ -38,6 +38,11 @@ import android.util.Log;
 //
 // AND
 //
+// SnoopSnitch
+// https://opensource.srlabs.de/git/snoopsnitch.git
+//
+// AND
+//
 // cordova-plugin-sim
 // https://github.com/pbakondy/cordova-plugin-sim/blob/master/src/android/com/pbakondy/Sim.java
 */
@@ -45,8 +50,21 @@ import android.util.Log;
 public class Telephony extends CordovaPlugin {
     private static final String TAG = "cordova-telephony";
 
+    // API required for advanced readings
+    public final static int ADVANCED_VERSION_CODE = Build.VERSION_CODES.JELLY_BEAN_MR2;
+
+    // Fields returned
+    public static final String MCC = "mcc";
+    public static final String MNC = "mnc";
+    public static final String CID = "cid";
+    public static final String LAC = "lac";
+    public static final String NETWORK_TYPE = "networkType";
+    public static final String PSC = "psc";
+    public static final String SIGNAL_STRENGTH = "signalStrength";
+
     // Actions
     private static final String ACTION_GET_TELEPHONY_INFO = "getTelephonyInfo";
+    private static final String LISTEN_TELEPHONY_INFO = "listenTelephonyInfo";
 
     // Permissions
     private static final String HAS_READ_PERMISSION = "hasReadPermission";
@@ -66,8 +84,8 @@ public class Telephony extends CordovaPlugin {
     @Override
     public boolean execute(String action, JSONArray data, CallbackContext callbackContext) throws JSONException {
         Log.d(TAG, "execute " + action);
+
         if (action.equals(ACTION_GET_TELEPHONY_INFO)) {
-            Log.d(TAG, "GET TELEPHONY DATA");
             Context context = this.cordova.getActivity().getApplicationContext();
             TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
 
@@ -75,11 +93,9 @@ public class Telephony extends CordovaPlugin {
             JSONObject result = new JSONObject();
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-                Log.d(TAG, "new version");
-                result = refreshV18(tm, result);
+
             } else {
-                Log.d(TAG, "old version");
-                result = refreshV1(tm, result);
+
             }
 
             callbackContext.success(result);
@@ -98,65 +114,6 @@ public class Telephony extends CordovaPlugin {
         else {
             return false;
         }
-    }
-
-    private JSONObject buildGSMResult(TelephonyManager tm, JSONObject result) {
-        Log.d(TAG, "its buildGSMResult");
-        String mncMCC = tm.getNetworkOperator();
-
-        if (mncMCC != null && mncMCC.length() >= 3 ) {
-
-            Log.d(TAG, "its mncMCC > 3");
-            try {
-                result.put("phoneType", "android-v1-gsm");
-                result.put("mnc", Integer.parseInt(mncMCC.substring(3)));
-                result.put("mcc", Integer.parseInt(mncMCC.substring(0, 3)));
-
-                GsmCellLocation gsmCellLocation = (GsmCellLocation) tm.getCellLocation();
-                if (gsmCellLocation != null) {
-                    result.put("cid", gsmCellLocation.getCid());
-                    result.put("lac", gsmCellLocation.getLac());
-                    result.put("psc", gsmCellLocation.getPsc());
-                }
-
-                JSONArray ncNeighbors = new JSONArray();
-                List<NeighboringCellInfo> ncList = tm.getNeighboringCellInfo();
-
-                for(NeighboringCellInfo ncInfo : ncList) {
-                    JSONObject ncObj = new JSONObject();
-
-                    ncObj.put("cid", ncInfo.getCid());
-                    ncObj.put("lac", ncInfo.getLac());
-                    ncObj.put("networkType", ncInfo.getNetworkType());
-                    ncObj.put("psc", ncInfo.getPsc());
-                    ncObj.put("signalStrength", ncInfo.getRssi());
-
-                    ncNeighbors.put(ncObj);
-                }
-                result.put("neighbors", ncNeighbors);
-            } catch (Exception e) {
-            }
-
-        }
-
-
-        return result;
-    }
-
-    private JSONObject refreshV1(TelephonyManager tm, JSONObject result) {
-        Log.d(TAG, "its V1");
-//        int phoneType = tm.getPhoneType();
-
-//        switch(phoneType) {
-//            case TelephonyManager.PHONE_TYPE_NONE:
-//            case TelephonyManager.PHONE_TYPE_SIP:
-//            case TelephonyManager.PHONE_TYPE_GSM:
-        result = buildGSMResult(tm, result);
-//                break;
-//        }
-
-
-        return result;
     }
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
@@ -223,7 +180,7 @@ public class Telephony extends CordovaPlugin {
 //                        tPsc = identityGsm.getPsc();
 //                        pDevice.mCell.setTimingAdvance(lte.getTimingAdvance());
                     } else if (info instanceof CellInfoWcdma) {
-                        Log.d(TAG, "its CellInfoWcdma");
+                        Log.d(TAG, "its CellInfoWcdmaParser");
                         final CellSignalStrengthWcdma signalStrength = ((CellInfoWcdma) info).getCellSignalStrength();
                         final CellIdentityWcdma identityWcdma = ((CellInfoWcdma) info).getCellIdentity();
 
