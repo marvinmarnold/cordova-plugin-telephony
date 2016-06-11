@@ -1,6 +1,7 @@
 # Usage
 
-telephony.refresh(function(result) {
+````
+telephony.refresh(result => {
   result.mnc; // int
   result.mcc; // int
   result.signalStrengthDBM; // float
@@ -9,6 +10,7 @@ telephony.refresh(function(result) {
   result.cid; // int
   result.phoneType; // 'gsm' (only, for now)
 })
+````
 
 # Example
-https://github.com/marvinmarnold/stingwatch/blob/master/cordova/gsm.js
+https://github.com/marvinmarnold/stingwatch/blob/ac2d1c837b5c7ca235c4cb8d0d938ad860a3f164/imports/startup/cordova/telephony.js
