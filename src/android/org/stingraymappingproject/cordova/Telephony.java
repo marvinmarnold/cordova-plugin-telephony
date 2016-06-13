@@ -4,29 +4,15 @@ import org.apache.cordova.*;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.stingraymappingproject.cordova.utils.CellInfoUtil;
+import org.stingraymappingproject.cordova.utils.CellLocationUtil;
 
 import android.Manifest;
-import android.annotation.TargetApi;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.telephony.CellIdentityCdma;
-import android.telephony.CellIdentityGsm;
-import android.telephony.CellIdentityLte;
-import android.telephony.CellIdentityWcdma;
-import android.telephony.CellInfo;
-import android.telephony.CellInfoCdma;
-import android.telephony.CellInfoGsm;
-import android.telephony.CellInfoLte;
-import android.telephony.CellInfoWcdma;
-import android.telephony.CellSignalStrengthCdma;
-import android.telephony.CellSignalStrengthGsm;
-import android.telephony.CellSignalStrengthLte;
-import android.telephony.CellSignalStrengthWcdma;
 import android.telephony.TelephonyManager;
-import android.telephony.gsm.GsmCellLocation;
-import android.telephony.NeighboringCellInfo;
 
 import java.util.List;
 
@@ -61,6 +47,15 @@ public class Telephony extends CordovaPlugin {
     public static final String NETWORK_TYPE = "networkType";
     public static final String PSC = "psc";
     public static final String SIGNAL_STRENGTH = "signalStrength";
+    public static final String PHONE_TYPE = "phoneType";
+
+    public static final String PHONE_TYPE_ANDROID_V1_SIM = "android-v1-sim";
+    public static final String PHONE_TYPE_ANDROID_V1_GSM = "android-v1-gsm";
+    public static final String PHONE_TYPE_ANDROID_V1_NEIGHBOR = "android-v1-neighbor";
+    public static final String PHONE_TYPE_ANDROID_V17_GSM = "android-v17-gsm";
+    public static final String PHONE_TYPE_ANDROID_V17_CDMA = "android-v17-cdma";
+    public static final String PHONE_TYPE_ANDROID_V17_LTE = "android-v17-lte";
+    public static final String PHONE_TYPE_ANDROID_V17_WCDMA = "android-v17-wcdma";
 
     // Actions
     private static final String ACTION_GET_TELEPHONY_INFO = "getTelephonyInfo";
@@ -83,22 +78,28 @@ public class Telephony extends CordovaPlugin {
 
     @Override
     public boolean execute(String action, JSONArray data, CallbackContext callbackContext) throws JSONException {
-        Log.d(TAG, "execute " + action);
+        Log.d(TAG, "execute new " + action);
 
         if (action.equals(ACTION_GET_TELEPHONY_INFO)) {
             Context context = this.cordova.getActivity().getApplicationContext();
-            TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+            TelephonyManager telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
 
-            // Initialize empty JSONObject for response
-            JSONObject result = new JSONObject();
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-
+            if (Build.VERSION.SDK_INT >= ADVANCED_VERSION_CODE) {
+                Log.d(TAG, "Newer than advanced");
+                List<JSONObject> readings = CellInfoUtil.getAllCellInfo(telephonyManager);
+                if(readings == null) {
+                    Log.d(TAG, "Fallback to older API");
+                    JSONObject reading = CellLocationUtil.getReading(telephonyManager);
+                    callbackContext.success(reading);
+                } else {
+                    Log.d(TAG, "Got some readings " + readings.size());
+                    splitAndSendReadings(callbackContext, readings);
+                }
             } else {
-
+                Log.d(TAG, "Older than advanced");
+                JSONObject reading = CellLocationUtil.getReading(telephonyManager);
+                callbackContext.success(reading);
             }
-
-            callbackContext.success(result);
 
             return true;
 
@@ -116,126 +117,12 @@ public class Telephony extends CordovaPlugin {
         }
     }
 
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
-    private JSONObject refreshV18(TelephonyManager tm, JSONObject result) {
-        int tSignalStrength = -1;
-        int tMnc = -1;
-        int tMcc = -1;
-        int tCid = -1;
-        int tLac = -1;
-        int tPsc = -1;
-
-        try {
-            Log.d(TAG, "try get all cell info");
-
-            List<CellInfo> cellInfoList = tm.getAllCellInfo();
-            Log.d(TAG, "got cell info");
-
-            if (cellInfoList != null) {
-                Log.d(TAG, "cell info not null");
-
-                for (final CellInfo info : cellInfoList) {
-                    Log.d(TAG, "another cell info");
-
-                    String tPhoneType = null;
-
-                    if (info instanceof CellInfoGsm) {
-                        Log.d(TAG, "its CellInfoGsm");
-                        final CellSignalStrengthGsm signalStrength = ((CellInfoGsm) info).getCellSignalStrength();
-                        final CellIdentityGsm identityGsm = ((CellInfoGsm) info).getCellIdentity();
-
-                        result.put("debug", "gsm18");
-                        tPhoneType = "android-v17-gsm";
-                        tSignalStrength = signalStrength.getDbm();
-                        tMnc = identityGsm.getMnc();
-                        tMcc = identityGsm.getMcc();
-                        tCid = identityGsm.getCid();
-                        tLac = identityGsm.getLac();
-                        tPsc = identityGsm.getPsc();
-                    } else if (info instanceof CellInfoCdma) {
-                        Log.d(TAG, "its CellInfoCdma");
-                        final CellSignalStrengthCdma signalStrength = ((CellInfoCdma) info).getCellSignalStrength();
-                        final CellIdentityCdma identityCdma = ((CellInfoCdma) info).getCellIdentity();
-
-                        result.put("debug", "cdma");
-                        tPhoneType = "android-v17-cdma";
-                        tSignalStrength = signalStrength.getDbm();
-                        tMnc = identityCdma.getSystemId();
-//                        tMcc = identityCdma.getMcc();
-                        tCid = identityCdma.getBasestationId();
-                        tLac = identityCdma.getNetworkId();
-//                        tPsc = identityCdma.getPsc();
-                    } else if (info instanceof CellInfoLte) {
-                        Log.d(TAG, "its CellInfoLte");
-                        final CellSignalStrengthLte signalStrength = ((CellInfoLte) info).getCellSignalStrength();
-                        final CellIdentityLte identityLte = ((CellInfoLte) info).getCellIdentity();
-
-                        result.put("debug", "lte");
-                        tPhoneType = "android-v17-lte";
-                        tSignalStrength = signalStrength.getDbm();
-                        tMnc = identityLte.getMnc();
-                        tMcc = identityLte.getMcc();
-                        tCid = identityLte.getCi();
-//                        tLac = identityGsm.getLac();
-//                        tPsc = identityGsm.getPsc();
-//                        pDevice.mCell.setTimingAdvance(lte.getTimingAdvance());
-                    } else if (info instanceof CellInfoWcdma) {
-                        Log.d(TAG, "its CellInfoWcdmaParser");
-                        final CellSignalStrengthWcdma signalStrength = ((CellInfoWcdma) info).getCellSignalStrength();
-                        final CellIdentityWcdma identityWcdma = ((CellInfoWcdma) info).getCellIdentity();
-
-                        result.put("debug", "wcdma");
-                        tPhoneType = "android-v17-gsm";
-                        tSignalStrength = signalStrength.getDbm();
-                        tMnc = identityWcdma.getMnc();
-                        tMcc = identityWcdma.getMcc();
-                        tCid = identityWcdma.getCid();
-                        tLac = identityWcdma.getLac();
-                        tPsc = identityWcdma.getPsc();
-                    }
-
-                    if(tPhoneType != null) {
-                        Log.d(TAG, "its phone type");
-                        result.put("phoneType", tPhoneType);
-                    }
-                    if(tSignalStrength != -1) {
-                        Log.d(TAG, "its signal strength");
-                        result.put("signalStrength", tSignalStrength);
-                    }
-
-                    if(tMcc != -1) {
-                        result.put("mcc", tMcc);
-                    }
-                    if(tMnc != -1) {
-                        result.put("mnc", tMnc);
-                    }
-                    if(tCid != -1) {
-                        result.put("cid", tCid);
-                    }
-                    if(tLac != -1) {
-                        result.put("lac", tLac);
-                    }
-                    if(tPsc != -1) {
-                        result.put("psc", tPsc);
-                    }
-
-                    if(result.get("debug") != null) {
-                       result.put("debug", result.getInt("mnc"));
-                    }
-                }
-            }
-        }catch (Exception e) {
+    public static void splitAndSendReadings(CallbackContext callbackContext, List<JSONObject> readings) {
+        for(JSONObject reading : readings) {
+            callbackContext.success(reading);
         }
-
-        // Fallback to lower API if values appear incorrect
-        if((tMnc == Integer.MAX_VALUE) || (tMnc == -1)) {
-            Log.d(TAG, "its max value MNC");
-            result = refreshV1(tm, result);
-        }
-
-        Log.d(TAG, "GOT TO THE END");
-        return result;
     }
+
     private void hasReadPermission(CallbackContext callbackContext) {
 
         boolean hasPermission = true;

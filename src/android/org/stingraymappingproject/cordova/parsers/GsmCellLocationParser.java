@@ -2,13 +2,20 @@ package org.stingraymappingproject.cordova.parsers;
 
 import android.telephony.CellLocation;
 import android.telephony.gsm.GsmCellLocation;
+import android.util.Log;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 public class GsmCellLocationParser {
-    public static JSONObject parse(JSONObject result, CellLocation cellLocation) {
-        GsmCellLocation gsmCellLocation = (GsmCellLocation) cellLocation;
+    private final static String TAG = "GsmCellLocationParser";
+
+    public static JSONObject parse(JSONObject result, GsmCellLocation gsmCellLocation) {
+        Log.d(TAG, "parse");
+        if(gsmCellLocation == null) {
+            Log.d(TAG, "gsmCellLocation null");
+            return result;
+        }
 
         int cid = gsmCellLocation.getCid();
         int lac = gsmCellLocation.getLac();

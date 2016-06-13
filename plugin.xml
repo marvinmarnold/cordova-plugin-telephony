@@ -51,7 +51,31 @@
         </config-file>
 
         <source-file src="src/android/org/stingraymappingproject/cordova/Telephony.java"
-            target-dir="src/org/stingraymappingproject/cordova" />
+          target-dir="src/org/stingraymappingproject/cordova" />
+
+        <source-file src="src/android/org/stingraymappingproject/cordova/listeners/TelephonyStateListener.java"
+          target-dir="src/org/stingraymappingproject/cordova/listeners" />
+
+        <source-file src="src/android/org/stingraymappingproject/cordova/parsers/CellInfoCdmaParser.java"
+          target-dir="src/org/stingraymappingproject/cordova/parsers" />
+
+        <source-file src="src/android/org/stingraymappingproject/cordova/parsers/CellInfoGsmParser.java"
+          target-dir="src/org/stingraymappingproject/cordova/parsers" />
+
+        <source-file src="src/android/org/stingraymappingproject/cordova/parsers/CellInfoLteParser.java"
+          target-dir="src/org/stingraymappingproject/cordova/parsers" />
+
+        <source-file src="src/android/org/stingraymappingproject/cordova/parsers/CellInfoWcdmaParser.java"
+                target-dir="src/org/stingraymappingproject/cordova/parsers" />
+
+        <source-file src="src/android/org/stingraymappingproject/cordova/parsers/GsmCellLocationParser.java"
+                target-dir="src/org/stingraymappingproject/cordova/parsers" />
+
+        <source-file src="src/android/org/stingraymappingproject/cordova/utils/CellInfoUtil.java"
+            target-dir="src/org/stingraymappingproject/cordova/utils" />
+
+        <source-file src="src/android/org/stingraymappingproject/cordova/utils/CellLocationUtil.java"
+            target-dir="src/org/stingraymappingproject/cordova/utils" />
 
         <js-module src="www/android/telephony.js" name="TelephonyAndroid">
           <merges target="window.plugins.telephony" />

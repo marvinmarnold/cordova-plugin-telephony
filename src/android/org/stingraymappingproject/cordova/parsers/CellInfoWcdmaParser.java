@@ -1,6 +1,5 @@
 package org.stingraymappingproject.cordova.parsers;
 
-
 import android.telephony.CellIdentityWcdma;
 import android.telephony.CellInfoWcdma;
 import android.telephony.CellSignalStrengthWcdma;
