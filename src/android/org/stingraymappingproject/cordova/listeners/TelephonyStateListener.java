@@ -31,7 +31,9 @@ public class TelephonyStateListener extends PhoneStateListener {
 
     @Override
     public void onCellLocationChanged(CellLocation location) {
+        Log.d(TAG, "onCellLocationChanged");
         if (location instanceof GsmCellLocation) {
+            Log.d(TAG, "GsmCellLocation");
             JSONObject reading = CellLocationUtil.buildFromGsmCellLocation((GsmCellLocation) location, telephonyManager);
 
             // Send results to Cordova
@@ -49,6 +51,7 @@ public class TelephonyStateListener extends PhoneStateListener {
 
     @Override
     public void onCellInfoChanged(List<CellInfo> cellInfoList) {
+        Log.d(TAG, "onCellInfoChanged");
         if(cellInfoList == null || cellInfoList.size() == 0)
             return;
 
