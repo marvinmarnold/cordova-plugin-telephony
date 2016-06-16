@@ -25,11 +25,11 @@ public class CellLocationUtil {
                 Log.d(TAG, "PHONE_TYPE_GSM");
                 GsmCellLocation gsmCellLocation = (GsmCellLocation) telephonyManager.getCellLocation();
 
-                if(gsmCellLocation != null) {
+//                if(gsmCellLocation != null) {
                     Log.d(TAG, "gsmCellLocation not null");
                     return buildFromGsmCellLocation(gsmCellLocation, telephonyManager);
-                }
-                break;
+//                }
+//                break;
 
             case TelephonyManager.PHONE_TYPE_CDMA:
                 Log.d(TAG, "PHONE_TYPE_CDMA");

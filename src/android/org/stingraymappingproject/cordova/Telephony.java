@@ -199,14 +199,7 @@ public class Telephony extends CordovaPlugin {
     }
 
     private void requestReadPermission(CallbackContext callbackContext) {
-        String requestType = null;
-        for(String requiredPermission : REQUIRED_PERMISSIONS) {
-            if(!hasPermission(requiredPermission))
-                requestType = requiredPermission;
-        }
-
-        if(requestType != null)
-            requestPermission(requestType);
+        ActivityCompat.requestPermissions(this.cordova.getActivity(), REQUIRED_PERMISSIONS, 12345);
 
         callbackContext.success();
     }
